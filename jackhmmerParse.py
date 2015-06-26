@@ -37,7 +37,7 @@ def jackhmmerParse(domain, jackhmmerFile):
 			currentSequence = ""
 
 		#if line is the important info line
-		elif line.startswith("   1 !") or line.startswith("   1 ?"):
+		elif line.strip().startswith("1 !") or line.strip().startswith("1 ?"):
 			#note: splits into 16 elements
 			splitLine = line.split()
 			#get startLocation, endLocation
@@ -48,10 +48,15 @@ def jackhmmerParse(domain, jackhmmerFile):
 			currentHit["end"] = end
 
 			#if line displaying sequence
-		elif line.startswith("  " + currentHit["gi"]):
+		elif line.strip().startswith(currentHit["gi"]):
 			#split line
 			splitLine = line.split()
 			currentSequence += splitLine[2].upper()
+
+
+	#delete holder entry from resultingDict
+	del resultingDict["x"]
+	print "Done parsing."
 	return resultingDict
 
 
