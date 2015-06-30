@@ -52,18 +52,16 @@ def jackhmmerParse(domain, jackhmmerFile):
 			#split line
 			splitLine = line.split()
 			currentSequence += splitLine[2].upper()
+		#if line reads: "No individual domains that satisfy 
+		#reporting thresholds (although complete target did)"
+		elif "although complete target did" in line:
+			#overwrite the holding "x" key to ignore entry
+			currentHit["gi"] = "x"
 
 
 	#delete holder entry from resultingDict
 	del resultingDict["x"]
 	print "Done parsing."
 	return resultingDict
-
-
-
-
-		
-
-
 
 
