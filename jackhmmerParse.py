@@ -1,67 +1,60 @@
 #! /usr/bin/python
 
-#Created by G. Barkhuff
-#June 2015
-#Method to parse jackhmmer result, after
-#Manually deleting file to only contain final iteration results.
+# Created by G. Barkhuff
+# June 2015
+# Method to parse jackhmmer hmm3-text result, after
+# Manually deleting file to only contain final iteration results.
 
 def jackhmmerParse(domain, jackhmmerFile):
-	#dictionary to hold all hits and info
-	resultingDict = {}
-	#dict to hold currentHit,
-	#to be nested inside resultingDict
-	currentHit = {"gi":"x"}
-	#holder for sequence
-	currentSequence = ""
+    #dictionary to hold all hits and info
+    resultingDict = {}
+    #temp hit
+    currentHit = {"gi":"x"}
+    #temp sequence
+    currentSequence = ""
+    #temp currentGI
+    currentGI = "$"
 
-	#open file for reading only
-	f = open(jackhmmerFile, "r")
+    
+    #open file for reading only
+    f = open(jackhmmerFile, "r")
 
-	#read line by line
-	lineList = f.readlines()
-	for line in lineList:
-		if line.startswith(">>"):
-			#put last sequence into dictionary
-			currentHit["sequence"] = currentSequence.replace("-", "")
-			#save last hit to resultingDict
-			resultingDict[currentHit["gi"]] = currentHit
-			#empty currentHit dict except for domain
-			currentHit = {"domain": domain}
-			#strip extra stuff from gi
-			strippedA = line.lstrip(">> ")
-			strippedB = strippedA.rstrip("\n")
-			strippedC = strippedB.strip()
-			#put gi in dictionary
-			currentHit["gi"] = strippedC
-			#empty string to hold new sequence
-			currentSequence = ""
+    #read line by line
+    lineList = f.readlines()
+    for line in lineList:
+        #strip, split to use later
+        strippedLine = line.strip().split()
 
-		#if line is the important info line
-		elif line.strip().startswith("1 !") or line.strip().startswith("1 ?"):
-			#note: splits into 16 elements
-			splitLine = line.split()
-			#get startLocation, endLocation
-			start = splitLine[9]
-			end = splitLine[10]
-			#put into dictionary
-			currentHit["start"] = start
-			currentHit["end"] = end
+        if line.startswith(">>"):
+            #hold GI
+            currentGI = strippedLine[1]
 
-			#if line displaying sequence
-		elif line.strip().startswith(currentHit["gi"]):
-			#split line
-			splitLine = line.split()
-			currentSequence += splitLine[2].upper()
-		#if line reads: "No individual domains that satisfy 
-		#reporting thresholds (although complete target did)"
-		elif "although complete target did" in line:
-			#overwrite the holding "x" key to ignore entry
-			currentHit["gi"] = "x"
+        if line.strip().startswith("=="):
+            #save last sequence to currentHit dict
+            currentHit["sequence"] = currentSequence.replace("-", "").upper()
+            #save last hit to resultingDict
+            resultingDict[currentHit["gi"]] = currentHit
 
+            #empty currentHit except domain
+            currentHit = {"domain": domain}
+            #empty seq variable
+            currentSequence = ""
 
-	#delete holder entry from resultingDict
-	del resultingDict["x"]
-	print "Done parsing."
-	return resultingDict
+            #update domain number
+            currentHit["gi"] = currentGI + "_" + strippedLine[2]
+            #update bit score
+            currentHit["score"] = strippedLine[4]
 
+        if line.strip().startswith(currentGI):
+            #if start is empty
+            if "start" not in currentHit:
+                currentHit["start"] = strippedLine[1]
+            #update end value
+            currentHit["end"] = strippedLine[3]
+            #append sequence
+            currentSequence += strippedLine[2]
+    #del temp hit
+    del resultingDict["x"]
+    print "Done parsing."
+    return resultingDict
 
